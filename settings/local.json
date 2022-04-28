@@ -1,0 +1,6 @@
+{
+  "servers": [
+    "https://SOME_RPC_ENDPOINT"
+  ],
+  "interval": 12000
+}

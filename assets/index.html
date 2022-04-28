@@ -1,0 +1,110 @@
+<html>
+
+<head>
+<title>atomic swap</title>
+<link rel="stylesheet" href="uni.css" />
+<link rel="stylesheet" href="loader.css" />
+</head>
+
+<body class="bod">
+
+
+  <div class="btn" onclick="connect()" style="display:none;" id="connectButton">Connect</div>
+  <div id="swap" class="card">
+
+    <div class="multi-input">
+
+      <div class="label">From</div>
+
+      <input class="inp" placeholder="0" id="amount_0" onkeyup="inputChanged(event)" />
+
+      <select id="token_0" class="sel">
+      </select>
+
+      <span class="max" id="max_0" onclick="maxclicked(event)">MAX</span>
+    </div>
+    <div class="sep">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C5CB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+    </div>
+    <div  class="multi-input">
+      <div class="label">To</div>
+
+      <input class="inp" placeholder="0" id="amount_1" onkeyup="inputChanged(event)" />
+
+      <select id="token_1" class="sel">
+      </select>
+
+      <span class="max" id="max_1" onclick="maxclicked(event)">MAX</span>
+
+    </div>
+
+    <br />
+
+    <div class="btn" id="token_0_approve" onclick="approve('token_0')" style="width:40%; margin-bottom:10px; float:left;  display:none;">Approve&nbsp;<span id="token_0_symbol"></span><div id="token_0_allowance" style="font-size:8px;"></div></div>
+    <div class="btn" id="token_1_approve" onclick="approve('token_1')" style="width:40%; margin-bottom:10px; float:right; display:none;">Approve&nbsp;<span id="token_1_symbol"></span><div id="token_1_allowance" style="font-size:8px;"></div></div>
+    <div style="clear:both;"></div>
+
+    <div class="btn" onclick="swap(event)">
+      Create Limit Order
+    </div>
+
+    <div>
+      <br />
+      <center id="token-info" class="info-wrapper">
+        Wallet Balances:
+        <div class="small" id="balances"></div>
+      </center>
+      <!--center class="info-wrapper" style="float:right;">
+        Reserves:
+        <div class="small" id="reserves"></div>
+      </center-->
+      <div style="clear:both;"></div>
+    </div>
+  </div>
+
+  <br /><br />
+
+  <div class="card">
+    <div class="label">Limit Orders</div>
+    <hr class='hr' />
+    <div id="orders">
+    </div>
+  </div>
+
+  <br /><br /><br /><br /><br />
+
+  <div class="wallet-info" style="padding-bottom:15px; right:0%;">
+    <div id="wallet-badge" class="info-wrapper" style="float:left; background:rgb(44, 47, 54);">
+      <div id="wallet" style="margin:1px 0px -1px 4px; display:inline-block;"></div>
+      <div id="wallet-dot" style="background:gray; border-radius:15px; height:15px; width:15px; float:right; margin-left:12px; margin-top:2px;"></div>
+    </div>
+
+    <div id="network-badge" class="info-wrapper" style="float:right; background:rgb(44, 47, 54);">
+      <div id="network" style="margin:0px 4px -1px 0px; display:inline-block;"></div>
+      <div id="network-dot" style="background:gray; border-radius:15px; height:15px; width:15px; float:left; margin-right:12px; margin-top:2px;"></div>
+    </div>
+  </div>
+
+  <div id="loader" style="display:none; position:fixed; top:0; bottom:0; left:0; right:0; height:100%; width:100%; background:rgba(0,0,0,0.2)">
+    <div class="lds-roller" style="top: 50%; left:50%; transform: translateY(-50%) translateX(-50%);">
+      <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+
+<!--div style="width:50%; float:right; background:red;">
+  <div id="history" style="position:fixed; top:0; left:50%; right:0; height:50px;"></div>
+  <iframe target="_parent" id="pageview" style="width:100%; height:100%; position:fixed; top:50px; bottom:0; left:50%; right:0;"></iframe>
+</div-->
+
+</body>
+
+<script src="bitcloutToken.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@metamask/legacy-web3@2.0.0/dist/metamask.web3.min.js"></script>
+
+<script src="./swap0.js"></script>
+<script>
+setTimeout(init, 1000)
+</script>
+
+
+</html>

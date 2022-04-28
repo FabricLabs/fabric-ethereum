@@ -1,21 +1,20 @@
 'use strict';
 
+// Dependencies
 const BN = require('bn.js');
 const jayson = require('jayson');
 
-const Label = require('../types/label');
-const Entity = require('../types/entity');
-const Service = require('../types/service');
-const Message = require('../types/message');
-const Transition = require('../types/transition');
+// Fabric Types
+const Actor = require('@fabric/core/types/actor');
+const Service = require('@fabric/core/types/service');
+const Message = require('@fabric/core/types/message');
+// const Transition = require('@fabric/core/types/transition');
 
 // Ethereum
-const VM = require('ethereumjs-vm').default;
-const Actor = require('../types/actor');
-// TODO: re-evaluate inclusion of Ethereum toolchain
-// const Account = require('ethereumjs-account').default;
-// const Blockchain = require('ethereumjs-blockchain').default;
-// const Block = require('ethereumjs-block');
+const VM = require('@ethereumjs/vm').default;
+// const Account = require('@ethereumjs/account').default;
+// const Blockchain = require('@ethereumjs/blockchain').default;
+// const Block = require('@ethereumjs/block').default;
 
 const Opcodes = {
   STOP: '00',
@@ -27,7 +26,6 @@ class Ethereum extends Service {
   constructor (settings = {}) {
     super(settings);
 
-    this.status = 'constructing';
     this.settings = Object.assign({
       name: '@services/ethereum',
       mode: 'rpc',
@@ -36,20 +34,22 @@ class Ethereum extends Service {
       hosts: [],
       stack: [],
       servers: ['http://127.0.0.1:8545'],
-      interval: 15000
+      interval: 15000,
+      targets: []
     }, this.settings, settings);
-
-    // Internal State
-    this._state = {
-      stack: this.settings.stack,
-      tip: null,
-      height: null
-    };
 
     // Internal Properties
     this.rpc = null;
     this.vm = new VM();
-    this.status = 'constructed';
+
+    // Internal State
+    this._state = {
+      status: 'STOPPED',
+      stack: this.settings.stack,
+      accounts: {},
+      tip: null,
+      height: null
+    };
 
     // Chainable
     return this;
@@ -63,10 +63,7 @@ class Ethereum extends Service {
   }
 
   set height (value) {
-    if (this._state.height !== value) {
-      this.emit('height', Message.fromVector(['EthereumBlockNumber', value]));
-      this._state.height = value;
-    }
+    this._state.height = value;
   }
 
   get tip () {
@@ -91,10 +88,8 @@ class Ethereum extends Service {
   }
 
   async _handleVMStep (step) {
-    console.log('[SERVICES:ETHEREUM]', '[VM]', `Executed Opcode: ${step.opcode.name}\n\tStack:`, step.stack);
-    let transition = Transition.between(this._state.stack, step.stack);
+    // let transition = Transition.between(this._state.stack, step.stack);
     this._state.stack = step.stack;
-    console.log('transition:', transition);``
   }
 
   async execute (program) {
@@ -108,7 +103,7 @@ class Ethereum extends Service {
     }).catch(err => console.log('Error    : ' + err));
   }
 
-  async _executeRPCRequest (name, params = [], callback = new Function()) {
+  async _executeRPCRequest (name, params = []) {
     const start = Date.now();
     const service = this;
     const actor = new Actor({
@@ -137,27 +132,55 @@ class Ethereum extends Service {
           }
         });
       } catch (exception) {
-        reject(new Error(`Request exception:`, exception));
+        reject(new Error(`Request exception: ${exception}`));
       }
     });
     return promise;
   }
 
-  async _checkRPCBlockNumber () {
+  async _checkAllTargetBalances () {
+    for (let i = 0; i < this.settings.targets.length; i++) {
+      this._getBalanceForAddress(this.settings.targets[i]);
+    }
+  }
+
+  async _getBalanceForAddress (address) {
     const service = this;
-    const request = service._executeRPCRequest('eth_blockNumber');
+    const request = service._executeRPCRequest('eth_getBalance', [address]);
+
     request.then((response) => {
-      this.height = response.result;
+      if (!response || !response.result) return;
+      service._state.accounts[address] = { balance: response.result };
     });
+
     return request;
   }
 
-  async _heartbeat () {
-    try {
-      const blockNumberRequest = await this._checkRPCBlockNumber();
-    } catch (exception) {
-      this.emit('error', `Could not retrieve current block from RPC: ${exception}`);
-    }
+  async _checkRPCBlockNumber () {
+    const service = this;
+    const request = service._executeRPCRequest('eth_blockNumber');
+
+    request.then((response) => {
+      service.height = Buffer.from(response.result.toString(), 'hex').toString(10);
+    });
+
+    return request;
+  }
+
+  async tick () {
+    const now = (new Date()).toISOString();
+    ++this.clock;
+
+    await this._checkRPCBlockNumber();
+    await this._checkAllTargetBalances();
+
+    const beat = Message.fromVector(['Generic', {
+      clock: this.clock,
+      created: now,
+      state: this._state
+    }]);
+
+    this.emit('beat', beat);
   }
 
   async stop () {
@@ -166,6 +189,7 @@ class Ethereum extends Service {
 
     if (this.settings.mode === 'rpc') {
       clearInterval(this.heartbeat);
+      delete this.heartbeat;
     }
 
     this.status = 'stopped';
@@ -184,7 +208,7 @@ class Ethereum extends Service {
     if (service.settings.mode === 'rpc') {
       const providers = service.settings.servers.map(x => new URL(x));
       // TODO: loop through all providers
-      let provider = providers[0];
+      const provider = providers[0];
 
       if (provider.protocol === 'https:') secure = true;
       const config = {
@@ -204,13 +228,18 @@ class Ethereum extends Service {
       service.rpc = client;
 
       // Assign Heartbeat
-      service.heartbeat = setInterval(service._heartbeat.bind(service), service.settings.interval);
+      service.heartbeat = setInterval(service.tick.bind(service), service.settings.interval);
     }
 
     service.vm.on('step', service._handleVMStep.bind(service));
     service.status = 'started';
-    service.emit('warning', `Service started!`);
+
+    service.emit('log', 'Service started!');
     service.emit('ready', { id: service.id });
+
+    this._checkAllTargetBalances();
+
+    return this;
   }
 
   async _RPCErrorHandler (error) {
