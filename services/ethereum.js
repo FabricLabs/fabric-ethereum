@@ -199,6 +199,10 @@ class Ethereum extends Service {
     this.emit('log', `HTTP Server emitted log event: ${msg}`);
   }
 
+  async generateBlock () {
+    return null;
+  }
+
   async tick () {
     const now = (new Date()).toISOString();
     ++this.clock;
@@ -270,6 +274,8 @@ class Ethereum extends Service {
       await this.http.start();
     }
 
+    await this._syncWithRPC();
+
     service.status = 'started';
 
     service.emit('log', 'Service started!');
@@ -280,8 +286,44 @@ class Ethereum extends Service {
     return this;
   }
 
+  async _getBlockByNumber (number) {
+    return this._makeRPCRequest('eth_getBlockByNumber', [number]);
+  }
+
+  async _getChainHeight () {
+    return this._makeRPCRequest('eth_blockNumber');
+  }
+
+  async _makeRPCRequest (method, params = []) {
+    const self = this;
+    return new Promise((resolve, reject) => {
+      if (!self.rpc) return reject(new Error('RPC manager does not exist.'));
+      try {
+        self.rpc.request(method, params, function (err, response) {
+          if (err) {
+            // TODO: replace with reject()
+            return resolve({
+              error: (err.error) ? JSON.parse(JSON.parse(err.error)) : err,
+              response: response
+            });
+          }
+
+          return resolve(response.result);
+        });
+      } catch (exception) {
+        return reject(exception);
+      }
+    });
+  }
+
   async _RPCErrorHandler (error) {
     this.emit('error', `[RPC] Error: ${error}`);
+  }
+
+  async _syncWithRPC () {
+    const height = await this._getChainHeight();
+    const best = await this._getBlockByNumber(height);
+    return this;
   }
 }
 
