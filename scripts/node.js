@@ -12,7 +12,7 @@ async function main (input = {}) {
 
   ethereum.on('beat', function (beat) {
     console.log('[ETHEREUM]', 'Beat:', beat);
-    console.log('[ETHEREUM]', 'Latest State:', beat['@data'].data.state);
+    console.log('[ETHEREUM]', 'Latest State:', beat.value.data.state);
   });
 
   await ethereum.start();

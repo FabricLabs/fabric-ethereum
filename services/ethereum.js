@@ -9,6 +9,7 @@ const Actor = require('@fabric/core/types/actor');
 const Service = require('@fabric/core/types/service');
 const Message = require('@fabric/core/types/message');
 // const Transition = require('@fabric/core/types/transition');
+const HTTPServer = require('@fabric/http/types/server');
 
 // Ethereum
 const Web3 = require('web3');
@@ -31,6 +32,7 @@ class Ethereum extends Service {
       name: '@services/ethereum',
       mode: 'rpc',
       network: 'main',
+      http: null,
       ETHID: 1,
       hosts: [],
       stack: [],
@@ -42,6 +44,7 @@ class Ethereum extends Service {
     // Internal Properties
     this.rpc = null;
     this.vm = new VM();
+    this.http = new HTTPServer(this.settings.http);
     this.web3 = new Web3(this.settings.servers[0]);
 
     // Internal State
@@ -192,6 +195,10 @@ class Ethereum extends Service {
     return request;
   }
 
+  async _handleHTTPServerLog (msg) {
+    this.emit('log', `HTTP Server emitted log event: ${msg}`);
+  }
+
   async tick () {
     const now = (new Date()).toISOString();
     ++this.clock;
@@ -257,6 +264,12 @@ class Ethereum extends Service {
     }
 
     service.vm.on('step', service._handleVMStep.bind(service));
+
+    if (this.settings.http) {
+      this.http.on('log', this._handleHTTPServerLog.bind(this));
+      await this.http.start();
+    }
+
     service.status = 'started';
 
     service.emit('log', 'Service started!');
