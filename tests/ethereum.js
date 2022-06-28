@@ -1,12 +1,9 @@
 'use strict';
 
-// require('debug-trace')({ always: true });
-
 const assert = require('assert');
-// const Wallet = require('../types/wallet');
-const Bitcoin = require('../services/bitcoin');
+// const Wallet = require('@fabric/core/types/wallet');
+const Ethereum = require('../services/ethereum');
 
-const message = require('../assets/message');
 const settings = require('../settings/test');
 const options = Object.assign({}, settings, {
   network: 'regtest',
@@ -14,30 +11,30 @@ const options = Object.assign({}, settings, {
   verbosity: 2
 });
 
-describe('@fabric/core/services/bitcoin', function () {
-  describe('Bitcoin', function () {
+describe('@fabric/core/services/ethereum', function () {
+  describe('Ethereum', function () {
     it('is available from @fabric/core', function () {
-      assert.equal(Bitcoin instanceof Function, true);
+      assert.equal(Ethereum instanceof Function, true);
     });
 
     it('can start and stop smoothly', async function () {
       async function test () {
-        const bitcoin = new Bitcoin(options);
+        const ethereum = new Ethereum(options);
 
         try {
-          await bitcoin.start();
+          await ethereum.start();
         } catch (exception) {
-          console.error('Could not start bitcoin:', exception);
+          console.error('Could not start ethereum:', exception);
         }
 
         try {
-          await bitcoin.stop();
+          await ethereum.stop();
         } catch (exception) {
-          console.error('Could not start bitcoin:', exception);
+          console.error('Could not start ethereum:', exception);
         }
 
-        assert.ok(bitcoin);
-        assert.equal(bitcoin.tip, '06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f');
+        assert.ok(ethereum);
+        assert.equal(ethereum.tip, '06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f');
       }
 
       await test();
@@ -45,32 +42,32 @@ describe('@fabric/core/services/bitcoin', function () {
 
     it('can generate a block', async function () {
       async function test () {
-        const bitcoin = new Bitcoin(options);
+        const ethereum = new Ethereum(options);
         let block = null;
 
         try {
-          await bitcoin.start();
+          await ethereum.start();
         } catch (exception) {
-          console.error('Could not start bitcoin:', exception);
+          console.error('Could not start ethereum:', exception);
         }
 
         try {
-          block = await bitcoin.generateBlock();
+          block = await ethereum.generateBlock();
         } catch (exception) {
           console.error('Could not generate block:', exception);
         }
 
         try {
-          await bitcoin.stop();
+          await ethereum.stop();
         } catch (exception) {
-          console.error('Could not start bitcoin:', exception);
+          console.error('Could not start ethereum:', exception);
         }
 
-        assert.ok(bitcoin);
+        assert.ok(ethereum);
         assert.ok(block);
 
-        assert.equal(bitcoin.tip, block.hash('hex'));
-        assert.equal(bitcoin.height, 1);
+        assert.equal(ethereum.tip, block.hash('hex'));
+        assert.equal(ethereum.height, 1);
       }
 
       await test();

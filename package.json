@@ -4,6 +4,7 @@
   "description": "Ethereum Oracle for Fabric.",
   "main": "services/ethereum.js",
   "scripts": {
+    "start": "node scripts/node.js",
     "test": "mocha tests"
   },
   "repository": {
@@ -25,6 +26,17 @@
   },
   "homepage": "https://github.com/FabricLabs/fabric-service-ethereum#readme",
   "dependencies": {
-    "@fabric/core": "martindale/fabric#message-relay"
+    "@ethereumjs/vm": "^5.5.3",
+    "web3": "^1.7.3"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "solc": "^0.8.13"
+  },
+  "peerDependencies": {
+    "@fabric/core": "github:FabricLabs/fabric#feature/node-16",
+    "@fabric/http": "github:FabricLabs/fabric-http#feature/node-16"
   }
 }

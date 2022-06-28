@@ -1,0 +1,11 @@
+{
+  "owner": "0x0E31f8C1CC70476518bF7D9263dD406a299619BF",
+  "http": {
+    "port": 9999,
+    "secure": false
+  },
+  "servers": [
+    "http://localhost:8545"
+  ],
+  "interval": 12500
+}
