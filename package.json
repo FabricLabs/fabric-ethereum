@@ -27,6 +27,7 @@
   "homepage": "https://github.com/FabricLabs/fabric-service-ethereum#readme",
   "dependencies": {
     "@ethereumjs/vm": "^5.5.3",
+    "jayson": "^3.6.6",
     "web3": "^1.7.3"
   },
   "devDependencies": {
